@@ -16,7 +16,13 @@ export default function BookmarkButton({ slug, className = '' }: BookmarkButtonP
 
   const fetchBookmark = useCallback(async () => {
     try {
-      const res = await fetch(`/api/posts/${slug}/bookmark`);
+      const res = await fetch(`/api/posts/${slug}/bookmark`, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setIsBookmarked(data.isBookmarked);

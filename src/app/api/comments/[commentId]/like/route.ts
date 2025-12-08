@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -16,18 +17,11 @@ export async function POST(
     return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+  }
+
+  const supabase = createAdminClient();
 
   // 기존 좋아요 확인
   const { data: existing } = await supabase

@@ -29,7 +29,24 @@ export default function ShareButton({ url, title, className = '' }: ShareButtonP
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(fullUrl);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(fullUrl);
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = fullUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback: Oops, unable to copy', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {

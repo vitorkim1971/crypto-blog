@@ -1,8 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
+import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
+
+export const dynamic = 'force-dynamic';
 
 // GET: 북마크 상태 확인
 export async function GET(
@@ -16,18 +19,7 @@ export async function GET(
     return NextResponse.json({ isBookmarked: false });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from('bookmarks')
@@ -51,18 +43,7 @@ export async function POST(
     return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const supabase = createAdminClient();
 
   // 기존 북마크 확인
   const { data: existing } = await supabase

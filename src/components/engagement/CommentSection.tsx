@@ -41,7 +41,13 @@ export default function CommentSection({ slug }: CommentSectionProps) {
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(`/api/posts/${slug}/comments`);
+      const res = await fetch(`/api/posts/${slug}/comments`, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments || []);
@@ -131,13 +137,15 @@ export default function CommentSection({ slug }: CommentSectionProps) {
       <div className="flex gap-3">
         {/* Avatar */}
         {comment.author?.avatar_url ? (
-          <Image
-            src={comment.author.avatar_url}
-            alt={comment.author.name || ''}
-            width={isReply ? 28 : 36}
-            height={isReply ? 28 : 36}
-            className="rounded-full"
-          />
+          <div className={`${isReply ? 'w-7 h-7' : 'w-9 h-9'} relative flex-shrink-0 rounded-full overflow-hidden`}>
+            <Image
+              src={comment.author.avatar_url}
+              alt={comment.author.name || ''}
+              fill
+              className="object-cover"
+              sizes={isReply ? "28px" : "36px"}
+            />
+          </div>
         ) : (
           <div
             className={`${isReply ? 'w-7 h-7' : 'w-9 h-9'} bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0`}
@@ -270,13 +278,15 @@ export default function CommentSection({ slug }: CommentSectionProps) {
         <form onSubmit={handleSubmit} className="mb-8">
           <div className="flex gap-3">
             {profile?.avatar_url ? (
-              <Image
-                src={profile.avatar_url}
-                alt={profile.name || ''}
-                width={36}
-                height={36}
-                className="rounded-full"
-              />
+              <div className="w-9 h-9 relative flex-shrink-0 rounded-full overflow-hidden">
+                <Image
+                  src={profile.avatar_url}
+                  alt={profile.name || ''}
+                  fill
+                  className="object-cover"
+                  sizes="36px"
+                />
+              </div>
             ) : (
               <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-medium text-gray-500">

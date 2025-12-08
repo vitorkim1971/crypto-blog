@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -12,18 +13,13 @@ export async function GET(
   const { slug } = await params;
   const session = await getServerSession(authOptions);
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  // 댓글과 작성자 정보 함께 가져오기 (Public data - use anon client)
+  // But for safety and consistency with NextAuth ID, we'll use Admin client for user-specific checks.
+
+  // Note: We use createAdminClient for everything here to simplify RLS bypass for NextAuth users.
+  // Ideally, we should use anon client for public reads, but for 'comment_likes' check which uses user_id, 
+  // admin client is safer given the hybrid auth.
+  const supabase = createAdminClient();
 
   // 댓글과 작성자 정보 함께 가져오기
   const { data: comments, error } = await supabase
@@ -107,18 +103,7 @@ export async function POST(
     return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const supabase = createAdminClient();
 
   const body = await request.json();
   const { content, parentId } = body;
