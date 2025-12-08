@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
 
+export const dynamic = 'force-dynamic';
+
 // POST: 댓글 좋아요 토글
 export async function POST(
   request: NextRequest,
@@ -12,10 +14,6 @@ export async function POST(
 ) {
   const { commentId } = await params;
   const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
-  }
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });

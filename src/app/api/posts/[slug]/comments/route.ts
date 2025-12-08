@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
 
+export const dynamic = 'force-dynamic';
+
 // GET: 포스트의 댓글 목록 가져오기
 export async function GET(
   request: NextRequest,
