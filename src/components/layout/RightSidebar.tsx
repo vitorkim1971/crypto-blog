@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import PremiumPromo from '../premium/PremiumPromo';
+import MetaMountainBanner from '../ads/MetaMountainBanner';
 
 const RECOMMENDED_TOPICS = [
-    { name: 'Bitcoin', slug: 'bitcoin' },
-    { name: 'Ethereum', slug: 'ethereum' },
-    { name: 'DeFi', slug: 'defi' },
-    { name: 'AI Coins', slug: 'ai-coins' },
-    { name: 'Regulation', slug: 'regulation' },
+    { name: '비트코인', slug: 'bitcoin' },
+    { name: '이더리움', slug: 'ethereum' },
+    { name: '디파이', slug: 'defi' },
+    { name: 'AI 코인', slug: 'ai-coins' },
+    { name: '규제', slug: 'regulation' },
     { name: 'NFT', slug: 'nft' },
-    { name: 'Macro', slug: 'macro' },
+    { name: '거시경제', slug: 'macro' },
 ];
 
 const FOOTER_LINKS = [
@@ -57,11 +58,14 @@ export default function RightSidebar({ tags = [] }: RightSidebarProps) {
                     <PremiumPromo />
                 </section>
 
-
+                {/* MetaMountain Banner */}
+                <section>
+                    <MetaMountainBanner />
+                </section>
 
                 {/* New Feature: Monthly Picks or Newsletter Promo */}
                 <section className="p-6 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
-                    <h3 className="font-serif font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
                         Victor's Newsletter
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">

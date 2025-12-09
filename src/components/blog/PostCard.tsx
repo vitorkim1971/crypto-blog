@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Post } from '@/types';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import PostInteractions from './PostInteractions';
 
 interface PostCardProps {
   post: Post;
@@ -82,6 +83,9 @@ export default function PostCard({ post, variant = 'default' }: PostCardProps) {
                     Premium
                   </span>
                 )}
+
+                {/* Interactions */}
+                <PostInteractions slug={post.slug} className="ml-auto" />
               </div>
             </div>
 
@@ -175,6 +179,9 @@ export default function PostCard({ post, variant = 'default' }: PostCardProps) {
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {post.readingTime || 5}분 읽기
             </span>
+
+            {/* Interactions */}
+            <PostInteractions slug={post.slug} className="ml-auto" />
           </div>
         </Link>
       </article>

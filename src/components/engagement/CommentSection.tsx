@@ -79,9 +79,13 @@ export default function CommentSection({ slug }: CommentSectionProps) {
       if (res.ok) {
         setNewComment('');
         fetchComments();
+      } else {
+        const err = await res.json();
+        alert(`댓글 등록 실패: ${err.error || '알 수 없는 오류'}`);
       }
     } catch (error) {
       console.error('Failed to submit comment:', error);
+      alert('댓글 등록 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -123,9 +127,13 @@ export default function CommentSection({ slug }: CommentSectionProps) {
 
       if (res.ok) {
         fetchComments();
+      } else {
+        const err = await res.json();
+        alert(`좋아요 실패: ${err.error}`);
       }
     } catch (error) {
       console.error('Failed to toggle like:', error);
+      alert('좋아요 처리 중 오류가 발생했습니다.');
     }
   };
 

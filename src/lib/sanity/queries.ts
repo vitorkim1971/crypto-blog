@@ -217,7 +217,8 @@ export async function searchPosts(searchTerm: string): Promise<Post[]> {
   const query = `*[_type == "post" && (
     title match $searchTerm ||
     excerpt match $searchTerm ||
-    pt::text(content) match $searchTerm
+    pt::text(content) match $searchTerm ||
+    $searchTerm in tags
   )] | order(publishedAt desc) {
     "id": _id,
     "slug": slug.current,
@@ -247,6 +248,45 @@ export async function searchPosts(searchTerm: string): Promise<Post[]> {
     return await client.fetch(query, { searchTerm: `*${searchTerm}*` });
   } catch (error) {
     console.error('Error searching posts:', error);
+    return [];
+  }
+}
+
+export async function getPostsByTag(tag: string): Promise<Post[]> {
+  if (!isSanityConfigured) return [];
+
+  const query = `*[_type == "post" && (
+    $tag in tags || 
+    count((tags[])[@ match $tag]) > 0
+  )] | order(publishedAt desc) {
+    "id": _id,
+    "slug": slug.current,
+    title,
+    excerpt,
+    "coverImageUrl": coverImage.asset->url,
+    "author": author->{
+      "id": _id,
+      name,
+      "avatar": avatar.asset->url,
+      bio,
+      social
+    },
+    "category": {
+      "slug": category,
+      "name": category,
+      "description": ""
+    },
+    tags,
+    isPremium,
+    publishedAt,
+    _updatedAt,
+    "readingTime": coalesce(readingTime, 5)
+  }`;
+
+  try {
+    return await client.fetch<Post[]>(query, { tag } as any);
+  } catch (error) {
+    console.error('Error fetching posts by tag:', error);
     return [];
   }
 }

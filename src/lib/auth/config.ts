@@ -98,32 +98,69 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === 'google') {
         try {
           const supabase = createAdminClient()
+          const email = user.email!
 
-          // Check if profile exists
+          // 1. Check if user exists in profiles (by email) -> implies they have a UUID
           const { data: existingProfile } = await supabase
             .from('profiles')
-            .select('*')
-            .eq('email', user.email!)
+            .select('id')
+            .eq('email', email)
             .single()
 
-          if (!existingProfile) {
-            // Create profile for new Google OAuth user
+          let userId = existingProfile?.id;
+
+          // 2. If no profile, check/create in Auth.Users first (Foreign Key Requirement)
+          if (!userId) {
+            // Check if user exists in Supabase Auth
+            const { data: { users } } = await supabase.auth.admin.listUsers();
+            const authUser = users.find(u => u.email === email);
+
+            if (authUser) {
+              userId = authUser.id;
+            } else {
+              // Create new Auth User
+              const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+                email: email,
+                email_confirm: true,
+                user_metadata: {
+                  name: user.name || profile?.name,
+                  avatar_url: user.image || (profile as any)?.picture,
+                }
+              });
+
+              if (createError) throw createError;
+              userId = newUser.user.id;
+            }
+          }
+
+          // 3. Ensure Profile Exists with correct UUID
+          const { data: currentProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+          if (!currentProfile) {
             await supabase.from('profiles').insert({
-              id: user.id,
-              email: user.email!,
+              id: userId,
+              email: email,
               name: user.name || profile?.name || null,
-              avatar_url: user.image || (profile as GoogleProfile)?.picture || null,
+              avatar_url: user.image || (profile as any)?.picture || null,
             })
           } else {
-            // Update existing profile with latest Google data
+            // Update existing profile
             await supabase
               .from('profiles')
               .update({
-                name: user.name || profile?.name || existingProfile.name,
-                avatar_url: user.image || (profile as GoogleProfile)?.picture || existingProfile.avatar_url,
+                name: user.name || profile?.name || currentProfile.name,
+                avatar_url: user.image || (profile as any)?.picture || currentProfile.avatar_url,
               })
-              .eq('id', existingProfile.id)
+              .eq('id', userId)
           }
+
+          // 4. CRITICAL: Mutate the User object so the UUID flows to the JWT/Session
+          user.id = userId!;
+
         } catch (error) {
           console.error('Error syncing Google OAuth profile:', error)
           return false
@@ -141,6 +178,30 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        token.sub = user.id
+      }
+
+      // Auto-heal: If ID is not a UUID (e.g. old Google numeric ID), fetch correct UUID from DB
+      // Regex for UUID v4
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      if (token.email && (!token.sub || !uuidRegex.test(token.sub))) {
+        try {
+          const supabase = createAdminClient();
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', token.email)
+            .single();
+
+          if (profile?.id) {
+            token.id = profile.id;
+            token.sub = profile.id; // sub is often used as the primary ID in NextAuth
+            token.uuid = profile.id; // explicit custom field just in case
+          }
+        } catch (error) {
+          console.error('Failed to auto-heal UUID in JWT:', error);
+        }
       }
       return token
     },

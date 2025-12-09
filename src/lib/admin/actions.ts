@@ -1,8 +1,24 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { AdminUser } from '@/types';
+
+export async function getNewsletterSubscriberCount(): Promise<number> {
+    const supabase = createAdminClient();
+
+    const { count, error } = await supabase
+        .from('newsletter_subscribers')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('getNewsletterSubscriberCount error:', error);
+        return 0;
+    }
+
+    return count || 0;
+}
 
 export async function searchUsers(query: string): Promise<AdminUser[]> {
     const supabase = await createClient();
@@ -53,7 +69,7 @@ export async function searchUsers(query: string): Promise<AdminUser[]> {
     return adminUsers;
 }
 
-export async function toggleUserPremium(userId: string, shouldBePremium: boolean): Promise<{ success: boolean; error?: string }> {
+export async function toggleUserPremium(userId: string, shouldBePremium: boolean, months: number = 1): Promise<{ success: boolean; error?: string }> {
     const supabase = await createClient();
 
     // Check if admin (Simple email check for now - explicit safety)
@@ -61,15 +77,18 @@ export async function toggleUserPremium(userId: string, shouldBePremium: boolean
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    // NOTE: Add your admin email here for safety if desired, or rely on the Guard component
-    // if (user.email !== 'admin@example.com') return { success: false, error: 'Forbidden' };
-
     try {
         if (shouldBePremium) {
             // Grant Premium (Manual Upsert)
             const now = new Date();
-            const nextYear = new Date();
-            nextYear.setFullYear(nextYear.getFullYear() + 100); // 100 years
+            const endDate = new Date();
+
+            // If months is 99 or more, treat as 'Lifetime' (100 years), otherwise add specific months
+            if (months >= 99) {
+                endDate.setFullYear(endDate.getFullYear() + 100);
+            } else {
+                endDate.setMonth(endDate.getMonth() + months);
+            }
 
             const { error } = await supabase
                 .from('subscriptions')
@@ -78,10 +97,10 @@ export async function toggleUserPremium(userId: string, shouldBePremium: boolean
                     stripe_subscription_id: `admin_manual_${Date.now()}`,
                     stripe_customer_id: `admin_manual_cust_${userId}`,
                     status: 'active',
-                    plan_type: 'yearly',
+                    plan_type: months >= 12 ? 'yearly' : 'monthly',
                     price_id: 'price_admin_manual',
                     current_period_start: now.toISOString(),
-                    current_period_end: nextYear.toISOString(), // Lifetime access
+                    current_period_end: endDate.toISOString(),
                     cancel_at_period_end: false,
                     created_at: now.toISOString(),
                     updated_at: now.toISOString(),

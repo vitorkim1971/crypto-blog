@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { searchPosts } from '@/lib/sanity/queries';
+import { getPostsByTag } from '@/lib/sanity/queries';
 import PostCard from '@/components/blog/PostCard'; // Reuse PostCard
 import { createPageMetadata } from '@/lib/seo/metadata-helpers';
 import { notFound } from 'next/navigation';
@@ -23,12 +23,8 @@ export default async function TopicPage({ params }: TopicPageProps) {
     const { slug } = await params;
     const topic = decodeURIComponent(slug);
 
-    // Reusing searchPosts query which likely filters by title or tags
-    // Ideally we should have a specific getPostsByTag query, but searchPosts might suffice if it searches tags
-    // If searchPosts is strictly title search, we need a new query. 
-    // checking queries.ts next to confirm. 
-    // For now assuming searchPosts works or I will create getPostsByTag.
-    const posts = await searchPosts(topic);
+    // Use dedicated tag search query
+    const posts = await getPostsByTag(topic);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">

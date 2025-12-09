@@ -1,22 +1,22 @@
 import Link from 'next/link';
 
 const RECOMMENDED_TOPICS = [
-  { name: 'Bitcoin', slug: 'bitcoin' },
-  { name: 'Ethereum', slug: 'ethereum' },
-  { name: 'DeFi', slug: 'defi' },
-  { name: 'AI Coins', slug: 'ai-coins' },
-  { name: 'Regulation', slug: 'regulation' },
+  { name: '비트코인', slug: 'bitcoin' },
+  { name: '이더리움', slug: 'ethereum' },
+  { name: '디파이', slug: 'defi' },
+  { name: 'AI 코인', slug: 'ai-coins' },
+  { name: '규제', slug: 'regulation' },
   { name: 'NFT', slug: 'nft' },
 ];
 
 const FOOTER_LINKS = [
-  { name: 'Help', href: '/help' },
-  { name: 'Status', href: '/status' },
-  { name: 'Writers', href: '/writers' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Privacy', href: '/privacy' },
-  { name: 'Terms', href: '/terms' },
-  { name: 'About', href: '/about' },
+  { name: '도움말', href: '/help' },
+  { name: '상태', href: '/status' },
+  { name: '작가', href: '/writers' },
+  { name: '블로그', href: '/blog' },
+  { name: '개인정보처리방침', href: '/privacy' },
+  { name: '이용약관', href: '/terms' },
+  { name: '소개', href: '/about' },
 ];
 
 export default function Sidebar() {
@@ -26,7 +26,7 @@ export default function Sidebar() {
         {/* About Section */}
         <section className="mb-10">
           <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 tracking-wider uppercase mb-4">
-            About Victor's Alpha
+            Victor's Alpha 소개
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
             수익화에 초점을 맞춘 프리미엄 암호화폐 투자 인사이트. 데이터 기반 분석과 실전 전략을 제공합니다.
@@ -35,14 +35,14 @@ export default function Sidebar() {
             href="/about"
             className="text-sm text-gray-900 dark:text-gray-100 hover:underline"
           >
-            More information
+            더 알아보기
           </Link>
         </section>
 
         {/* Recommended Topics */}
         <section className="mb-10">
           <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 tracking-wider uppercase mb-4">
-            Recommended Topics
+            추천 토픽
           </h3>
           <div className="flex flex-wrap gap-2">
             {RECOMMENDED_TOPICS.map((topic) => (

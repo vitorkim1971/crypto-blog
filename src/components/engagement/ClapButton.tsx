@@ -19,7 +19,13 @@ export default function ClapButton({ slug, className = '' }: ClapButtonProps) {
   // 박수 정보 가져오기
   const fetchClaps = useCallback(async () => {
     try {
-      const res = await fetch(`/api/posts/${slug}/claps`);
+      const res = await fetch(`/api/posts/${slug}/claps`, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setTotalClaps(data.totalClaps);
@@ -52,9 +58,17 @@ export default function ClapButton({ slug, className = '' }: ClapButtonProps) {
           const data = await res.json();
           setUserClaps(data.userClaps);
           fetchClaps();
+        } else {
+          try {
+            const err = await res.json();
+            alert(`오류가 발생했습니다: ${err.error || '알 수 없는 오류'}`);
+          } catch {
+            alert('오류가 발생했습니다.');
+          }
         }
       } catch (error) {
         console.error('Failed to add claps:', error);
+        alert('서버 통신 중 오류가 발생했습니다.');
       }
       setPendingClaps(0);
     }, 500);

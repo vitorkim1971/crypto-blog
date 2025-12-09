@@ -10,7 +10,9 @@ export default function UserList() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(false);
     const [toggling, setToggling] = useState<string | null>(null);
+    const [selectedDuration, setSelectedDuration] = useState<number>(1); // Default 1 month
 
+    // ... (fetch logic remains same)
     // Initial fetch
     useEffect(() => {
         const fetchInitial = async () => {
@@ -41,11 +43,18 @@ export default function UserList() {
     };
 
     const handleToggle = async (userId: string, currentStatus: boolean) => {
-        if (!confirm(currentStatus ? '프리미엄 권한을 해제하시겠습니까?' : '이 사용자에게 프리미엄 권한을 부여하시겠습니까?')) return;
+        // If currently premium, confirm revoke
+        if (currentStatus) {
+            if (!confirm('프리미엄 권한을 해제하시겠습니까?')) return;
+        } else {
+            // If not premium, confirm grant with current selection
+            if (!confirm(`${selectedDuration}개월 동안 프리미엄 권한을 부여하시겠습니까?`)) return;
+        }
 
         setToggling(userId);
         try {
-            await toggleUserPremium(userId, !currentStatus);
+            // Pass the selected duration (ignored if removing premium)
+            await toggleUserPremium(userId, !currentStatus, currentStatus ? 0 : selectedDuration);
             // Refresh list
             const results = await searchUsers(query);
             setUsers(results);
@@ -83,6 +92,7 @@ export default function UserList() {
                         <tr>
                             <th className="px-4 py-3">User</th>
                             <th className="px-4 py-3">Email</th>
+                            <th className="px-4 py-3">Joined</th>
                             <th className="px-4 py-3">Status</th>
                             <th className="px-4 py-3">Action</th>
                         </tr>
@@ -109,11 +119,21 @@ export default function UserList() {
                                     </div>
                                 </td>
                                 <td className="px-4 py-3 font-mono text-xs">{user.email}</td>
+                                <td className="px-4 py-3 text-xs">
+                                    {new Date(user.created_at).toLocaleDateString()}
+                                </td>
                                 <td className="px-4 py-3">
                                     {user.isPremium ? (
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-yellow-400 to-yellow-600 text-white shadow-sm">
-                                            Premium
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className="inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-yellow-400 to-yellow-600 text-white shadow-sm">
+                                                Premium
+                                            </span>
+                                            {user.subscription?.current_period_end && (
+                                                <span className="text-[10px] text-gray-400 mt-1">
+                                                    ~ {new Date(user.subscription.current_period_end).toLocaleDateString()}
+                                                </span>
+                                            )}
+                                        </div>
                                     ) : (
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                                             Standard
@@ -121,22 +141,36 @@ export default function UserList() {
                                     )}
                                 </td>
                                 <td className="px-4 py-3">
-                                    <button
-                                        onClick={() => handleToggle(user.id, user.isPremium)}
-                                        disabled={toggling === user.id}
-                                        className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${user.isPremium
-                                            ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
-                                            : 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400'
-                                            }`}
-                                    >
-                                        {toggling === user.id ? '처리 중...' : user.isPremium ? '해제' : '프리미엄 부여'}
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {!user.isPremium && (
+                                            <select
+                                                value={selectedDuration}
+                                                onChange={(e) => setSelectedDuration(Number(e.target.value))}
+                                                className="text-xs border rounded px-1 py-1 dark:bg-gray-800 dark:border-gray-600"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {[1, 3, 6, 12].map(m => (
+                                                    <option key={m} value={m}>{m}개월</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                        <button
+                                            onClick={() => handleToggle(user.id, user.isPremium)}
+                                            disabled={toggling === user.id}
+                                            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${user.isPremium
+                                                ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+                                                : 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400'
+                                                }`}
+                                        >
+                                            {toggling === user.id ? '처리 중...' : user.isPremium ? '해제' : '부여'}
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
                         {users.length === 0 && !loading && (
                             <tr>
-                                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                                     검색 결과가 없습니다
                                 </td>
                             </tr>

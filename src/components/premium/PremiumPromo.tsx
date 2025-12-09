@@ -17,7 +17,7 @@ export default function PremiumPromo() {
                 {/* Content */}
                 <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2 leading-tight">
                     Victor's Alpha<br />
-                    프리미엄 후원
+                    후원하기
                 </h3>
 
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-5 leading-relaxed">
@@ -31,7 +31,7 @@ export default function PremiumPromo() {
                     href="/subscribe"
                     className="block w-full py-2.5 px-4 bg-amber-400 hover:bg-amber-500 text-white text-sm font-bold text-center rounded-xl transition-colors shadow-sm shadow-amber-200 dark:shadow-none"
                 >
-                    프리미엄 후원하기
+                    프리미엄 맴버십
                 </Link>
             </div>
         </div>

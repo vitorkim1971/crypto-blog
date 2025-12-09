@@ -193,7 +193,7 @@ export default function SubscribePage() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mt-8">
               <p className="text-sm text-gray-700 leading-relaxed">
                 <strong>💡 후원 완료 후</strong><br />
-                <span className="text-gray-600">이메일(support@victoralpha.com)이나 텔레그램으로 <strong>TXID(거래번호)</strong>를 보내주시면 확인 후 즉시 처리해 드립니다.</span>
+                <span className="text-gray-600">이메일(vitorkim1971@gmail.com)이나 텔레그램으로 <strong>TXID(거래번호)</strong>를 보내주시면 확인 후 즉시 처리해 드립니다.</span>
               </p>
             </div>
           </div>

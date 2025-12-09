@@ -1,6 +1,9 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createAdminClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth/config';
+
+export const dynamic = 'force-dynamic';
 
 // GET: 특정 포스트의 박수 정보 가져오기
 export async function GET(
@@ -8,19 +11,10 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const session = await getServerSession(authOptions);
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  // Use Admin Client to bypass RLS for public stats and user specific checks
+  const supabase = createAdminClient();
 
   // 전체 박수 수
   const { data: clapsData, error: clapsError } = await supabase
@@ -35,18 +29,22 @@ export async function GET(
   const totalClaps = clapsData?.reduce((sum, item) => sum + item.clap_count, 0) || 0;
 
   // 현재 사용자의 박수 수
-  const { data: { user } } = await supabase.auth.getUser();
   let userClaps = 0;
 
-  if (user) {
-    const { data: userClapsData } = await supabase
-      .from('post_claps')
-      .select('clap_count')
-      .eq('post_slug', slug)
-      .eq('user_id', user.id)
-      .single();
+  if (session?.user?.id) {
+    // Check if ID is valid UUID to avoid DB error
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id);
 
-    userClaps = userClapsData?.clap_count || 0;
+    if (isValidUUID) {
+      const { data: userClapsData } = await supabase
+        .from('post_claps')
+        .select('clap_count')
+        .eq('post_slug', slug)
+        .eq('user_id', session.user.id)
+        .single();
+
+      userClaps = userClapsData?.clap_count || 0;
+    }
   }
 
   return NextResponse.json({
@@ -62,26 +60,19 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const session = await getServerSession(authOptions);
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
   }
 
+  // Validate UUID to prevent DB error (Postgres will reject non-UUID)
+  const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id);
+  if (!isValidUUID) {
+    return NextResponse.json({ error: '유효하지 않은 사용자 ID입니다.' }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
   const body = await request.json();
   const addClaps = Math.min(body.claps || 1, 10); // 한 번에 최대 10개
 
@@ -90,7 +81,7 @@ export async function POST(
     .from('post_claps')
     .select('id, clap_count')
     .eq('post_slug', slug)
-    .eq('user_id', user.id)
+    .eq('user_id', session.user.id)
     .single();
 
   if (existingClap) {
@@ -118,7 +109,7 @@ export async function POST(
       .from('post_claps')
       .insert({
         post_slug: slug,
-        user_id: user.id,
+        user_id: session.user.id,
         clap_count: addClaps,
       })
       .select()

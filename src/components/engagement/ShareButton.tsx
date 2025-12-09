@@ -177,6 +177,21 @@ export default function ShareButton({ url, title, className = '' }: ShareButtonP
             <span>카카오톡</span>
           </button>
 
+          {/* 텔레그램 */}
+          <button
+            onClick={() => {
+              const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(fullUrl)}&text=${encodeURIComponent(title)}`;
+              window.open(telegramUrl, '_blank', 'width=550,height=420');
+              setIsOpen(false);
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.48-.94-2.4-1.54-1.06-.7-.37-1.09.23-1.72.14-.15 2.54-2.31 2.59-2.51.01-.02.01-.05 0-.07-.01-.02-.04-.03-.09-.01-.06.02-1.56.99-4.4 2.92-.42.29-.8.43-1.14.42-.37-.01-1.09-.21-1.62-.38-.66-.21-1.18-.32-1.13-.67.02-.18.27-.36.75-.55 2.94-1.28 4.9-2.12 5.88-2.53 2.8-.16 3.38-.16 3.76-.16.08 0 .27.02.39.12.1.08.13.19.14.27z" />
+            </svg>
+            <span>Telegram</span>
+          </button>
+
           {/* 네이티브 공유 (모바일) */}
           {typeof navigator !== 'undefined' && 'share' in navigator && (
             <button
